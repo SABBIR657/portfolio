@@ -7,7 +7,7 @@ const profileSchema = new mongoose.Schema({
   },
   title: {
     type: String,
-    required: true
+    required: false
   },
   bio: {
     type: String,

@@ -13,17 +13,17 @@ exports.login = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Please provide an email and password', 400));
   }
 
-  // Check for user
-  const user = await User.findOne({ email });
+  // Check for user (case-insensitive search)
+  const user = await User.findOne({ 
+    email: { $regex: new RegExp(`^${email}$`, 'i') } 
+  });
 
   if (!user) {
     return next(new ErrorResponse('Invalid credentials', 401));
   }
 
-  // Check if password matches
-  const isMatch = await user.comparePassword(password);
-
-  if (!isMatch) {
+  // Check if password matches (plain text comparison)
+  if (user.password !== password) {
     return next(new ErrorResponse('Invalid credentials', 401));
   }
 
@@ -41,7 +41,6 @@ exports.login = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.getMe = asyncHandler(async (req, res, next) => {
   const user = await User.findById(req.user.id);
-
   res.status(200).json({
     success: true,
     data: user

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const userSchema = new mongoose.Schema({
@@ -7,35 +6,50 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    default: "mdsabbirrahman2025@gmail.com"
+    default: process.env.ADMIN_EMAIL || "mdsabbirrahman2025@gmail.com"
   },
   password: {
     type: String,
     required: true,
-    default: "$2a$10$N9qo8uLOickgx2ZMRZoMy.MqrqUVs0Z4fqX3WU628iC5YVYvQ9qG6" // 112233 encrypted
+    default: process.env.ADMIN_PASSWORD || "112233" // Plain text
+  },
+  role: {
+    type: String,
+    enum: ['admin', 'user'],
+    default: 'admin'
   }
 }, { timestamps: true });
 
-// Generate JWT token
+// Generate JWT token (with role included)
 userSchema.methods.generateAuthToken = function() {
   return jwt.sign(
-    { id: this._id },
+    { 
+      id: this._id,
+      role: this.role // Include role in token
+    },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRE }
   );
 };
 
-// Compare passwords
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+// Plain text password comparison
+userSchema.methods.comparePassword = function(candidatePassword) {
+  return this.password === candidatePassword;
 };
 
-// Create the admin user if it doesn't exist
+// Admin initialization
 userSchema.statics.initializeAdmin = async function() {
-  const admin = await this.findOne({ email: "mdsabbirrahman2025@gmail.com" });
+  const adminEmail = process.env.ADMIN_EMAIL || "mdsabbirrahman2025@gmail.com";
+  const adminPassword = process.env.ADMIN_PASSWORD || "112233";
+  
+  const admin = await this.findOne({ email: adminEmail });
   if (!admin) {
-    await this.create({});
-    console.log("Admin user created with default credentials");
+    await this.create({
+      email: adminEmail,
+      password: adminPassword, // Storing plain text
+      role: 'admin'
+    });
+    console.log("Admin user created with plain text password");
   }
 };
 

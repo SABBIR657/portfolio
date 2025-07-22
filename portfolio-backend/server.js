@@ -6,6 +6,8 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const bcrypt = require('bcryptjs')
+
 
 const app = express();
 
@@ -45,11 +47,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 // Initialize admin user
 const User = require('./models/User');
-const adminUser = {
-  email: process.env.ADMIN_EMAIL,
-  password: process.env.ADMIN_PASSWORD
-};
-User.initializeAdmin(adminUser);
+User.initializeAdmin();
 
 // Routes
 app.use('/api/auth', authLimiter, authRoutes);
@@ -74,6 +72,35 @@ if (process.env.NODE_ENV === 'production') {
 app.get('/', (req, res) => {
   res.send('Portfolio Backend API');
 });
+
+
+// app.get('/reset-admin', async (req, res) => {
+//   const User = require('./models/User');
+//   await User.deleteOne({ email: process.env.ADMIN_EMAIL });
+  
+//   const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
+//   await User.create({
+//     email: process.env.ADMIN_EMAIL,
+//     password: hashedPassword
+//   });
+  
+//   res.json({ success: true, message: 'Admin reset' });
+// });
+
+
+// app.get('/verify-pass', async (req, res) => {
+//   const User = require('./models/User');
+//   const bcrypt = require('bcryptjs');
+  
+//   const admin = await User.findOne({ email: process.env.ADMIN_EMAIL });
+//   const isMatch = await bcrypt.compare(process.env.ADMIN_PASSWORD, admin.password);
+  
+//   res.json({
+//     storedHash: admin.password,
+//     envPassword: process.env.ADMIN_PASSWORD,
+//     matchResult: isMatch
+//   });
+// });
 
 // Error handling middleware (correct parameter order)
 app.use((err, req, res, next) => {

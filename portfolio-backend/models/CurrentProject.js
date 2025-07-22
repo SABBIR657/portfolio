@@ -134,7 +134,7 @@ const currentProjectSchema = new mongoose.Schema({
   }],
   myRole: {
     type: String,
-    required: true
+    required: false
   },
   myContributions: [String],
   
